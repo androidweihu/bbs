@@ -82,6 +82,13 @@ class Article(models.Model):
     desc = models.CharField(max_length=255)  # 文章描述
     create_time = models.DateTimeField()  # 创建时间
 
+    # 评论数
+    comment_count = models.IntegerField(verbose_name="评论数", default=0)
+    # 点赞数
+    up_count = models.IntegerField(verbose_name="点赞数", default=0)
+    # 踩
+    down_count = models.IntegerField(verbose_name="踩数", default=0)
+
     category = models.ForeignKey(to="Category", to_field="nid", null=True, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(to="UserInfo", to_field="nid", on_delete=models.DO_NOTHING)
     tags = models.ManyToManyField(  # 中介模型
@@ -149,7 +156,8 @@ class Comment(models.Model):
     user = models.ForeignKey(to="UserInfo", to_field="nid", on_delete=models.DO_NOTHING)
     content = models.CharField(max_length=255)  # 评论内容
     create_time = models.DateTimeField(auto_now_add=True)
-    parent_comment = models.ForeignKey("self", null=True, on_delete=models.DO_NOTHING)
+    parent_comment = models.ForeignKey("self", null=True, blank=True,
+                                       on_delete=models.DO_NOTHING)  # blank=True 在django admin里面可以不填
 
     def __str__(self):
         return self.content

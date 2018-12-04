@@ -132,3 +132,8 @@ STATICFILES_DIRS = [
 
 # 告诉Django项目用哪张表做认证
 AUTH_USER_MODEL = 'blog.UserInfo'
+
+# Django用户上传的文件都默认放在这个文件夹下
+MEDIA_URL = "/media/"
+# media配置，用户上传的文件都默认放在这个文件夹下
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")

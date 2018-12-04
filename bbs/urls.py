@@ -14,8 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,re_path
 from blog import views
+from django.views.static import serve
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +32,8 @@ urlpatterns = [
     path('pc-geetest/register/', views.get_geetest),
     # 专门用来校验用户名是否已被注册的接口
     path('check_username_exist/', views.check_username_exist),
+
+    # media相关的路由设置
+    re_path(r'^media/(?P<path>.*)$', serve, {"document_root": settings.MEDIA_ROOT}),
+
 ]

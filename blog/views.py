@@ -87,7 +87,9 @@ def login(request):
 
 
 def index(request):
-    return render(request, "index.html")
+    # 查询所有的文章列表
+    article_list = models.Article.objects.all()
+    return render(request, "index.html", {"article_list": article_list})
 
 
 # 获取验证码图片的视图
