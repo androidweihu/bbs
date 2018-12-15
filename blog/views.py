@@ -3,8 +3,7 @@ from django.http import JsonResponse
 from django.contrib import auth
 from geetest import GeetestLib
 from blog import forms, models
-
-
+from django.db.models import Count
 # Create your views here.
 
 # VALID_CODE = ""
@@ -72,7 +71,7 @@ def login(request):
             if user:
                 # 用户名密码正确
                 # 给用户做登录
-                auth.login(request, user)
+                auth.login(request, user)  # 将登录用户赋值给 request.user
                 ret["msg"] = "/index/"
             else:
                 # 用户名密码错误
@@ -95,6 +94,8 @@ def logout(request):
 def index(request):
     # 查询所有的文章列表
     article_list = models.Article.objects.all()
+
+
     return render(request, "index.html", {"article_list": article_list})
 
 
@@ -130,7 +131,7 @@ def get_valid_img(request):
 
         tmp = random.choice([u, l, n])
         tmp_list.append(tmp)
-        draw_obj.text((20 + 40 * i, 0), tmp, fill=get_random_color(), font=font_obj)
+        draw_obj.text((20+40*i, 0), tmp, fill=get_random_color(), font=font_obj)
 
     print("".join(tmp_list))
     print("生成的验证码".center(120, "="))
@@ -193,11 +194,14 @@ def get_geetest(request):
 # 注册的视图函数
 def register(request):
     if request.method == "POST":
+        print(request.POST)
+        print("=" * 120)
         ret = {"status": 0, "msg": ""}
         form_obj = forms.RegForm(request.POST)
         print(request.POST)
         # 帮我做校验
         if form_obj.is_valid():
+
             # 校验通过，去数据库创建一个新的用户
             form_obj.cleaned_data.pop("re_password")
             avatar_img = request.FILES.get("avatar")
@@ -215,6 +219,7 @@ def register(request):
     form_obj = forms.RegForm()
     print(form_obj.fields)
     return render(request, "register.html", {"form_obj": form_obj})
+    # return render(request, "form_test.html", {"form_obj": form_obj})
 
 
 # 校验用户名是否已被注册
@@ -227,3 +232,74 @@ def check_username_exist(request):
         ret["status"] = 1
         ret["msg"] = "用户名已被注册！"
     return JsonResponse(ret)
+
+
+# 个人博客主页
+def home(request, username):
+    print(username)
+    # 去UserInfo表里把用户对象取出来
+    user = models.UserInfo.objects.filter(username=username).first()
+    if not user:
+        return HttpResponse("404")
+    # 如果用户存在需要将TA写的所有文章找出来
+    blog = user.blog
+
+    # 我的文章列表
+    article_list = models.Article.objects.filter(user=user)
+    # 我的文章分类及每个分类下文章数
+    # 将我的文章按照我的分类分组，并统计出每个分类下面的文章数
+    # category_list = models.Category.objects.filter(blog=blog)
+    category_list = models.Category.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+    # [{'title': '技术', 'c': 2}, {'title': '生活', 'c': 1}, {'title': 'LOL', 'c': 1}]
+    # 统计当前站点下有哪一些标签，并且按标签统计出文章数
+    tag_list = models.Tag.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+
+    # 按日期归档
+    archive_list = models.Article.objects.filter(user=user).extra(
+        select={"archive_ym": "date_format(create_time,'%%Y-%%m')"}
+    ).values("archive_ym").annotate(c=Count("nid")).values("archive_ym", "c")
+
+    return render(request, "home.html", {
+        "username": username,
+        "blog": blog,
+        "article_list": article_list,
+    })
+
+
+def get_left_menu(username):
+    user = models.UserInfo.objects.filter(username=username).first()
+    blog = user.blog
+    category_list = models.Category.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+    tag_list = models.Tag.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+    # 按日期归档
+    archive_list = models.Article.objects.filter(user=user).extra(
+        select={"archive_ym": "date_format(create_time,'%%Y-%%m')"}
+    ).values("archive_ym").annotate(c=Count("nid")).values("archive_ym", "c")
+
+    return category_list, tag_list, archive_list
+
+
+def article_detail(request, username, pk):
+    """
+    :param username: 被访问的blog的用户名
+    :param pk: 访问的文章的主键id值
+    :return:
+    """
+    print('-------请求了------')
+    user = models.UserInfo.objects.filter(username=username).first()
+    if not user:
+        return HttpResponse("404")
+    blog = user.blog
+    # 找到当前的文章
+    article_obj = models.Article.objects.filter(pk=pk).first()
+
+
+    return render(
+        request,
+        "article_detail.html",
+        {
+            "username": username,
+            "article": article_obj,
+            "blog": blog,
+         }
+    )

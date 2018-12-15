@@ -11,8 +11,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-6 col-md-offset-3">
-            <form novalidate autocomplete="off" action="/reg/" method="post" class="form-horizontal reg-form"
-                  enctype="multipart/form-data">
+            <form novalidate autocomplete="off" action="/reg/" method="post" class="form-horizontal reg-form" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="form-group">
@@ -102,31 +101,26 @@
         $.ajax({
             url: "/reg/",
             type: "post",
-            processData: false,
-            contentType: false,
+            processData: false,  // 告诉jQuery不要处理我的数据
+            contentType: false,  // 告诉jQuery不要设置content类型
             data: formData,
-            success: function (data) {
-                if (data.status) {
+            success:function (data) {
+                if (data.status){
                     // 有错误就展示错误
                     // console.log(data.msg);
                     // 将报错信息填写到页面上
-                    $.each(data.msg, function (k, v) {
+                    $.each(data.msg, function (k,v) {
                         // console.log("id_"+k, v[0]);
                         // console.log($("#id_"+k));
-                        $("#id_" + k).next("span").text(v[0]).parent().parent().addClass("has-error");
+                        $("#id_"+k).next("span").text(v[0]).parent().parent().addClass("has-error");
                     })
 
-                } else {
+                }else {
                     // 没有错误就跳转到指定页面
                     location.href = data.msg;
                 }
             }
         })
-    });
-
-    // 将所有的input框绑定获取焦点的事件，将所有的错误信息清空
-    $("form input").focus(function () {
-        $(this).next().text("").parent().parent().removeClass("has-error");
     });
 
     // 将所有的input框绑定获取焦点的事件，将所有的错误信息清空
@@ -145,7 +139,7 @@
             type: "get",
             data: {"username": username},
             success: function (data) {
-                if (data.status) {
+                if (data.status){
                     // 用户名已被注册
                     $("#id_username").next().text(data.msg).parent().parent().addClass("has-error");
                 }

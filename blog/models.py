@@ -20,8 +20,8 @@ class UserInfo(AbstractUser):
         return self.username
 
     class Meta:
-        verbose_name = "用户"  # 在admin中中文显示表名为"用户s"
-        verbose_name_plural = verbose_name  # 在admin中中文显示表名为"用户",去除复数"s"
+        verbose_name = "用户"
+        verbose_name_plural = verbose_name
 
 
 class Blog(models.Model):
@@ -78,9 +78,9 @@ class Article(models.Model):
     文章
     """
     nid = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=50, verbose_name="文章标题")  # 文章标题  verbose_name="文章标题"在admin中显示中文字段
+    title = models.CharField(max_length=50, verbose_name="文章标题")  # 文章标题
     desc = models.CharField(max_length=255)  # 文章描述
-    create_time = models.DateTimeField()  # 创建时间
+    create_time = models.DateTimeField()  # 创建时间  --> datetime()
 
     # 评论数
     comment_count = models.IntegerField(verbose_name="评论数", default=0)
@@ -95,6 +95,7 @@ class Article(models.Model):
         to="Tag",
         through="Article2Tag",
         through_fields=("article", "tag"),  # 注意顺序！！！
+
     )
 
     def __str__(self):
