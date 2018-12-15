@@ -86,6 +86,12 @@ def login(request):
     return render(request, "login2.html")
 
 
+# 注销
+def logout(request):
+    auth.logout(request)
+    return redirect("/index/")
+
+
 def index(request):
     # 查询所有的文章列表
     article_list = models.Article.objects.all()
