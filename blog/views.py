@@ -4,6 +4,8 @@ from django.contrib import auth
 from geetest import GeetestLib
 from blog import forms, models
 from django.db.models import Count
+
+
 # Create your views here.
 
 # VALID_CODE = ""
@@ -95,7 +97,6 @@ def index(request):
     # 查询所有的文章列表
     article_list = models.Article.objects.all()
 
-
     return render(request, "index.html", {"article_list": article_list})
 
 
@@ -131,7 +132,7 @@ def get_valid_img(request):
 
         tmp = random.choice([u, l, n])
         tmp_list.append(tmp)
-        draw_obj.text((20+40*i, 0), tmp, fill=get_random_color(), font=font_obj)
+        draw_obj.text((20 + 40 * i, 0), tmp, fill=get_random_color(), font=font_obj)
 
     print("".join(tmp_list))
     print("生成的验证码".center(120, "="))
@@ -293,7 +294,6 @@ def article_detail(request, username, pk):
     # 找到当前的文章
     article_obj = models.Article.objects.filter(pk=pk).first()
 
-
     return render(
         request,
         "article_detail.html",
@@ -301,5 +301,29 @@ def article_detail(request, username, pk):
             "username": username,
             "article": article_obj,
             "blog": blog,
-         }
+        }
     )
+
+
+import json
+
+from django.db.models import F
+
+
+def up_down(request):
+    print(request.POST)
+    article_id = request.POST.get('article_id')
+    is_up = json.loads(request.POST.get('is_up'))
+    user = request.user
+    response = {"state": True}
+    print("is_up", is_up)
+    try:
+        models.ArticleUpDown.objects.create(user=user, article_id=article_id, is_up=is_up)
+        models.Article.objects.filter(pk=article_id).update(up_count=F("up_count") + 1)
+
+    except Exception as e:
+        response["state"] = False
+        response["fisrt_action"] = models.ArticleUpDown.objects.filter(user=user, article_id=article_id).first().is_up
+
+    return JsonResponse(response)
+    # return HttpResponse(json.dumps(response))
