@@ -4,7 +4,13 @@ from django.contrib import auth
 from geetest import GeetestLib
 from blog import forms, models
 from django.db.models import Count
+import logging
 
+# 生成一个logger实例，专门用来记录日志
+logger = logging.getLogger(__name__)
+
+
+# logger_s10 = logging.getLogger("collect")
 
 # Create your views here.
 
@@ -236,30 +242,55 @@ def check_username_exist(request):
 
 
 # 个人博客主页
-def home(request, username):
-    print(username)
+def home(request, username, *args):
+    logger.debug("home视图获取到用户名:{}".format(username))
     # 去UserInfo表里把用户对象取出来
     user = models.UserInfo.objects.filter(username=username).first()
     if not user:
+        logger.warning("又有人访问不存在页面了...")
         return HttpResponse("404")
     # 如果用户存在需要将TA写的所有文章找出来
     blog = user.blog
-
-    # 我的文章列表
-    article_list = models.Article.objects.filter(user=user)
-    # 我的文章分类及每个分类下文章数
-    # 将我的文章按照我的分类分组，并统计出每个分类下面的文章数
-    # category_list = models.Category.objects.filter(blog=blog)
-    category_list = models.Category.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
-    # [{'title': '技术', 'c': 2}, {'title': '生活', 'c': 1}, {'title': 'LOL', 'c': 1}]
-    # 统计当前站点下有哪一些标签，并且按标签统计出文章数
-    tag_list = models.Tag.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
-
-    # 按日期归档
-    archive_list = models.Article.objects.filter(user=user).extra(
-        select={"archive_ym": "date_format(create_time,'%%Y-%%m')"}
-    ).values("archive_ym").annotate(c=Count("nid")).values("archive_ym", "c")
-
+    if not args:
+        logger.debug("args没有接收到参数，默认走的是用户的个人博客页面！")
+        # 我的文章列表
+        article_list = models.Article.objects.filter(user=user)
+        # 我的文章分类及每个分类下文章数
+        # 将我的文章按照我的分类分组，并统计出每个分类下面的文章数
+        # category_list = models.Category.objects.filter(blog=blog)
+        # category_list = models.Category.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+        # # [{'title': '技术', 'c': 2}, {'title': '生活', 'c': 1}, {'title': 'LOL', 'c': 1}]
+        # # 统计当前站点下有哪一些标签，并且按标签统计出文章数
+        # tag_list = models.Tag.objects.filter(blog=blog).annotate(c=Count("article")).values("title", "c")
+        #
+        # # 按日期归档
+        # archive_list = models.Article.objects.filter(user=user).extra(
+        #     select={"archive_ym": "date_format(create_time,'%%Y-%%m')"}
+        # ).values("archive_ym").annotate(c=Count("nid")).values("archive_ym", "c")
+    else:
+        logger.debug(args)
+        logger.debug("------------------------------")
+        # 表示按照文章的分类或tag或日期归档来查询
+        # args = ("category", "技术")
+        # article_list = models.Article.objects.filter(user=user).filter(category__title="技术")
+        if args[0] == "category":
+            article_list = models.Article.objects.filter(user=user).filter(category__title=args[1])
+        elif args[0] == "tag":
+            article_list = models.Article.objects.filter(user=user).filter(tags__title=args[1])
+        else:
+            # 按照日期归档
+            try:
+                year, month = args[1].split("-")
+                logger.debug("分割得到参数year:{}, month:{}".format(year, month))
+                # logger_s10.info("得到年和月的参数啦！！！！")
+                logger.debug("************************")
+                article_list = models.Article.objects.filter(user=user).filter(
+                    create_time__year=year, create_time__month=month
+                )
+            except Exception as e:
+                logger.warning("请求访问的日期归档格式不正确！！！")
+                logger.warning((str(e)))
+                return HttpResponse("404")
     return render(request, "home.html", {
         "username": username,
         "blog": blog,
@@ -286,7 +317,6 @@ def article_detail(request, username, pk):
     :param pk: 访问的文章的主键id值
     :return:
     """
-    print('-------请求了------')
     user = models.UserInfo.objects.filter(username=username).first()
     if not user:
         return HttpResponse("404")
