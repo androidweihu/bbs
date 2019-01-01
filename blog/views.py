@@ -324,6 +324,10 @@ def article_detail(request, username, pk):
     # 找到当前的文章
     article_obj = models.Article.objects.filter(pk=pk).first()
 
+    # 所有评论列表
+
+    comment_list = models.Comment.objects.filter(article_id=pk)
+
     return render(
         request,
         "article_detail.html",
@@ -331,6 +335,7 @@ def article_detail(request, username, pk):
             "username": username,
             "article": article_obj,
             "blog": blog,
+            "comment_list": comment_list
         }
     )
 
@@ -357,3 +362,30 @@ def up_down(request):
 
     return JsonResponse(response)
     # return HttpResponse(json.dumps(response))
+
+
+def comment(request):
+    print(request.POST)
+
+    pid = request.POST.get("pid")
+    article_id = request.POST.get("article_id")
+    content = request.POST.get("content")
+    user_pk = request.user.pk
+    response = {}
+    if not pid:  # 根评论
+        comment_obj = models.Comment.objects.create(article_id=article_id, user_id=user_pk, content=content)
+    else:
+        comment_obj = models.Comment.objects.create(article_id=article_id, user_id=user_pk, content=content,
+                                                    parent_comment_id=pid)
+
+    response["create_time"] = comment_obj.create_time.strftime("%Y-%m-%d")
+    response["content"] = comment_obj.content
+    response["username"] = comment_obj.user.username
+
+    return JsonResponse(response)
+
+
+def comment_tree(request, article_id):
+    ret = list(models.Comment.objects.filter(article_id=article_id).values("pk", "content", "parent_comment_id"))
+    print(ret)
+    return JsonResponse(ret, safe=False)
