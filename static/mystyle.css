@@ -22,6 +22,7 @@
     height: 80px;
 }
 
+
 /* 博客主页面 自定义样式*/
 .author-img {
     width: 80px;
@@ -35,6 +36,7 @@
 .article-footer {
     margin-top: 10px;
 }
+
 
 /*个人博客主页样式*/
 .header {
@@ -57,6 +59,8 @@
     font-size: 18px;
 }
 
+
+
 #div_digg {
     float: right;
     margin-bottom: 10px;
@@ -77,7 +81,6 @@
     margin-top: 2px;
     padding-top: 5px;
 }
-
 .buryit {
     float: right;
     margin-left: 20px;
@@ -92,4 +95,24 @@
 
 .clear {
     clear: both;
+}
+
+input.author{
+    background-image: url("/static/img/icon_form.gif");
+    background-repeat: no-repeat;
+    border: 1px solid #ccc;
+    padding: 4px 4px 4px 30px;
+    width: 300px;
+    font-size: 13px;
+}
+
+
+
+.list-group-item .con{
+    margin-top: 10px;
+}
+
+
+.comment_tree .comment_item{
+    margin-left: 20px;
 }

@@ -2,7 +2,7 @@ from django.urls import path, re_path
 from blog import views
 
 urlpatterns = [
-
+    re_path(r"backend/add_article/", views.add_article),
     re_path(r"up_down/", views.up_down),
     re_path(r"comment/", views.comment),
     re_path(r"comment_tree/(\d+)/", views.comment_tree),

@@ -40,5 +40,6 @@ urlpatterns = [
 
     # media相关的路由设置
     re_path(r'^media/(?P<path>.*)$', serve, {"document_root": settings.MEDIA_ROOT}),
+    re_path(r'^upload/', views.upload),
 
 ]

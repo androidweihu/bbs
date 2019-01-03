@@ -8,3 +8,19 @@ weihu123
 
 url:
 http://127.0.0.1:8000/blog/weihu/article/1
+
+
+添加文章
+http://127.0.0.1:8000/blog/backend/add_article/
+
+
+1. 导出env中的模块到requirements.txt
+
+pip freeze > requirements.txt
+
+2.安装已有requirements.txt的项目依赖
+
+pip install -r requirements.txt
+
+
+Ctrl + Shift + F或从从菜单Edit-》Find-》Find in Path进入全局查找界面

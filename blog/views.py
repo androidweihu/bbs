@@ -8,8 +8,6 @@ import logging
 
 # 生成一个logger实例，专门用来记录日志
 logger = logging.getLogger(__name__)
-
-
 # logger_s10 = logging.getLogger("collect")
 
 # Create your views here.
@@ -103,6 +101,7 @@ def index(request):
     # 查询所有的文章列表
     article_list = models.Article.objects.all()
 
+
     return render(request, "index.html", {"article_list": article_list})
 
 
@@ -138,7 +137,7 @@ def get_valid_img(request):
 
         tmp = random.choice([u, l, n])
         tmp_list.append(tmp)
-        draw_obj.text((20 + 40 * i, 0), tmp, fill=get_random_color(), font=font_obj)
+        draw_obj.text((20+40*i, 0), tmp, fill=get_random_color(), font=font_obj)
 
     print("".join(tmp_list))
     print("生成的验证码".center(120, "="))
@@ -326,7 +325,8 @@ def article_detail(request, username, pk):
 
     # 所有评论列表
 
-    comment_list = models.Comment.objects.filter(article_id=pk)
+    comment_list=models.Comment.objects.filter(article_id=pk)
+
 
     return render(
         request,
@@ -335,57 +335,140 @@ def article_detail(request, username, pk):
             "username": username,
             "article": article_obj,
             "blog": blog,
-            "comment_list": comment_list
-        }
+            "comment_list":comment_list
+         }
     )
+
+
 
 
 import json
 
 from django.db.models import F
 
-
 def up_down(request):
     print(request.POST)
-    article_id = request.POST.get('article_id')
-    is_up = json.loads(request.POST.get('is_up'))
-    user = request.user
-    response = {"state": True}
-    print("is_up", is_up)
+    article_id=request.POST.get('article_id')
+    is_up=json.loads(request.POST.get('is_up'))
+    user=request.user
+    response={"state":True}
+    print("is_up",is_up)
     try:
-        models.ArticleUpDown.objects.create(user=user, article_id=article_id, is_up=is_up)
-        models.Article.objects.filter(pk=article_id).update(up_count=F("up_count") + 1)
+        models.ArticleUpDown.objects.create(user=user,article_id=article_id,is_up=is_up)
+        models.Article.objects.filter(pk=article_id).update(up_count=F("up_count")+1)
 
     except Exception as e:
-        response["state"] = False
-        response["fisrt_action"] = models.ArticleUpDown.objects.filter(user=user, article_id=article_id).first().is_up
+        response["state"]=False
+        response["fisrt_action"]=models.ArticleUpDown.objects.filter(user=user,article_id=article_id).first().is_up
+
+
+
 
     return JsonResponse(response)
-    # return HttpResponse(json.dumps(response))
+    #return HttpResponse(json.dumps(response))
+
+
+
+
+
+
+
+
+
+
 
 
 def comment(request):
+
     print(request.POST)
 
-    pid = request.POST.get("pid")
-    article_id = request.POST.get("article_id")
-    content = request.POST.get("content")
-    user_pk = request.user.pk
-    response = {}
-    if not pid:  # 根评论
-        comment_obj = models.Comment.objects.create(article_id=article_id, user_id=user_pk, content=content)
+    pid=request.POST.get("pid")
+    article_id=request.POST.get("article_id")
+    content=request.POST.get("content")
+    user_pk=request.user.pk
+    response={}
+    if not pid:  #根评论
+        comment_obj=models.Comment.objects.create(article_id=article_id,user_id=user_pk,content=content)
     else:
-        comment_obj = models.Comment.objects.create(article_id=article_id, user_id=user_pk, content=content,
-                                                    parent_comment_id=pid)
+        comment_obj=models.Comment.objects.create(article_id=article_id,user_id=user_pk,content=content,parent_comment_id=pid)
 
-    response["create_time"] = comment_obj.create_time.strftime("%Y-%m-%d")
-    response["content"] = comment_obj.content
-    response["username"] = comment_obj.user.username
+
+
+    response["create_time"]=comment_obj.create_time.strftime("%Y-%m-%d")
+    response["content"]=comment_obj.content
+    response["username"]=comment_obj.user.username
 
     return JsonResponse(response)
 
 
-def comment_tree(request, article_id):
-    ret = list(models.Comment.objects.filter(article_id=article_id).values("pk", "content", "parent_comment_id"))
+
+
+def comment_tree(request,article_id):
+
+    ret=list(models.Comment.objects.filter(article_id=article_id).values("pk","content","parent_comment_id"))
     print(ret)
-    return JsonResponse(ret, safe=False)
+    return JsonResponse(ret,safe=False)
+
+
+
+
+def add_article(request):
+
+    if request.method=="POST":
+        title=request.POST.get('title')
+        article_content=request.POST.get('article_content')
+        user=request.user
+
+        from bs4 import BeautifulSoup
+
+        bs=BeautifulSoup(article_content,"html.parser")
+        desc=bs.text[0:150]+"..."
+
+
+        # 过滤非法标签
+        for tag in bs.find_all():
+
+            print(tag.name)
+
+            if tag.name in ["script", "link"]:
+                tag.decompose()
+
+        article_obj=models.Article.objects.create(user=user,title=title,desc=desc)
+        models.ArticleDetail.objects.create(content=str(bs),article=article_obj)
+
+
+        return HttpResponse("添加成功")
+
+
+
+
+    return render(request,"add_article.html")
+
+
+
+from bbs import settings
+import os,json
+def upload(request):
+    print(request.FILES)
+    obj = request.FILES.get("upload_img")
+
+    print("name",obj.name)
+
+    path=os.path.join(settings.MEDIA_ROOT,"add_article_img",obj.name)
+
+    with open(path,"wb") as f:
+        for line in obj:
+            f.write(line)
+
+
+    res={
+        "error":0,
+        "url":"/media/add_article_img/"+obj.name
+    }
+
+
+    return HttpResponse(json.dumps(res))
+
+
+
+
